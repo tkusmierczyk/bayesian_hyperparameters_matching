@@ -1,6 +1,6 @@
 
 
-# Bayesian models hyperparameters learning by matching moments of prior predictive distribution.
+# Learning hyperparameters in Bayesian models by matching moments of prior predictive distributions.
 
 The code demonstrates how to choose hyperparameters for priors in Bayesian models. The priors are found using SGD to minimize a discrepancy between prior predictive distribution moments and requested values. For example, a user provides an expectation and a variance for Poisson Matrix Factorization model and the algorithm searches for matching hyperparameters.
 
