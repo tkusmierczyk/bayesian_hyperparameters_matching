@@ -20,16 +20,16 @@ an approach that matches suitable statistics of the prior predictive distributio
 
 ### Main files 
 
-  * pmf_sgd_optimization.ipynb  - Jupter Notebook illustrating how priors matching requested values of prior predictive expectation and/or variance can be found for Poisson Matrix Factorization (PMF) model using SGD.
-  * hpf_sgd_optimization.ipynb  - Jupter Notebook illustrating how priors matching requested values of prior predictive expectation and/or variance can be found for Hierarchical Poisson Matrix Factorization (HPF) model using SGD.
-  * pmf_estimators_analysis.ipynb  - Jupter Notebook illustrating bias and variance of the estimators used in pmf_sgd_optimization.ipynb for PMF model.
-  * pmf_surface_visualizations.ipynb  - Jupter Notebook illustrating 1D and 2D projections of optimization space for the problem of matching Poisson Matrix Factorization (PMF) prior predicitve distribution variance (minimization of the discrepancy=(Variance-100)^2 ). We consider two parametrizations: abcd vs mu-sgima. 
+  * [pmf_sgd_optimization.ipynb](pmf_sgd_optimization.ipynb)  - Jupter Notebook illustrating how priors matching requested values of prior predictive expectation and/or variance can be found for Poisson Matrix Factorization (PMF) model using SGD.
+  * [hpf_sgd_optimization.ipynb](hpf_sgd_optimization.ipynb)  - Jupter Notebook illustrating how priors matching requested values of prior predictive expectation and/or variance can be found for Hierarchical Poisson Matrix Factorization (HPF) model using SGD.
+  * [pmf_estimators_analysis.ipynb](pmf_estimators_analysis.ipynb)  - Jupter Notebook illustrating bias and variance of the estimators used in pmf_sgd_optimization.ipynb for PMF model.
+  * [pmf_surface_visualizations.ipynb](pmf_surface_visualizations.ipynb)  - Jupter Notebook illustrating 1D and 2D projections of optimization space for the problem of matching Poisson Matrix Factorization (PMF) prior predicitve distribution variance (minimization of the discrepancy=(Variance-100)^2 ). We consider two parametrizations: abcd vs mu-sgima. 
 
 
 ### Sampling code 
 
-  * pmf_model.py  - Methods calculating E[Y] and E[Y^2] (and therefore also Var[Y]) over prior predictive distribution for Poisson Matrix Factorization.
-  * hpf_model.py  - Methods calculating E[Y] and E[Y^2] (and therefore also Var[Y]) over prior predictive distribution for Hierarchical Poisson Matrix Factorization.
+  * [pmf_model.py](pmf_model.py)  - Methods calculating E[Y] and E[Y^2] (and therefore also Var[Y]) over prior predictive distribution for Poisson Matrix Factorization.
+  * [hpf_model.py](hpf_model.py)  - Methods calculating E[Y] and E[Y^2] (and therefore also Var[Y]) over prior predictive distribution for Hierarchical Poisson Matrix Factorization.
 
 
 ### Additional files 
