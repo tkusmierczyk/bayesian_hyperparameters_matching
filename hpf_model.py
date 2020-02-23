@@ -2,6 +2,7 @@
 
 import numpy as np
 import tensorflow as tf
+import tensorflow_probability as tfp
 from tensorflow_probability import distributions as tfd
 import warnings
 
@@ -64,17 +65,17 @@ def empirical_Ey_and_Ey2_np(a=3, ap=3, bp=1.0, c=3, cp=3, dp=1.0,
     return expectation, expectation_squared
 
 
-def empirical_Ey_and_Ey2_tf(a=3, ap=3, bp=1.0, c=3, cp=3, dp=1.0,  
+@tf.function
+def empirical_Ey_and_Ey2_tf_logscore(a=3, ap=3, bp=1.0, c=3, cp=3, dp=1.0,  
                             nsamples_latent=100, nsamples_latent1=1, 
                             nsamples_output=10, K=25, N=1, M=1):        
     """
         Returns E_prior[Y] and E_prior[Y^2] for given set of hyperparameters.
         Parametrization like in: http://jakehofman.com/inprint/poisson_recs.pdf
+        Gradients obtained with log-score derivative trick.
     """     
     if N!=1: warnings.warn("N!=1 will be ignored!")
     if N!=1: warnings.warn("M!=1 will be ignored!")
-             
-    a, ap, bp, c, cp, dp = _ttf(a), _ttf(ap), _ttf(bp), _ttf(c), _ttf(cp), _ttf(dp) # cast to tf
     
     ksi = tfd.Gamma(ap, ap/bp).sample(nsamples_latent) # NL0
     theta = tfd.Gamma(a, ksi).sample((K,nsamples_latent1)) # K x NL1 x NL0
@@ -86,7 +87,49 @@ def empirical_Ey_and_Ey2_tf(a=3, ap=3, bp=1.0, c=3, cp=3, dp=1.0,
     latent = tf.reshape(latent, [-1]) # NL1*NL0
       
     poisson = tfd.Poisson(rate=latent)
-    y_samples = np.random.poisson(latent, size=[nsamples_output, nsamples_latent*nsamples_latent1]) # NO x NL1*NL0
+    y_samples = poisson.sample([nsamples_output])
+
+    conditional_expectation = tfp.monte_carlo.expectation(
+        f=lambda x: x,
+        samples=y_samples,
+        log_prob=poisson.log_prob, use_reparameterization = False)
+
+    conditional_expectation_squared = tfp.monte_carlo.expectation(
+        f=lambda x: x*x,
+        samples=y_samples,
+        log_prob=poisson.log_prob, use_reparameterization = False)
+    
+    expectation = tf.reduce_mean(conditional_expectation)
+    expectation_squared = tf.reduce_mean(conditional_expectation_squared)
+    
+    return expectation, expectation_squared
+
+
+@tf.function
+def empirical_Ey_and_Ey2_tf(a=3, ap=3, bp=1.0, c=3, cp=3, dp=1.0,  
+                            nsamples_latent=100, nsamples_latent1=1, 
+                            nsamples_output=10, K=25, N=1, M=1):        
+    """
+        Returns E_prior[Y] and E_prior[Y^2] for given set of hyperparameters.
+        Parametrization like in: http://jakehofman.com/inprint/poisson_recs.pdf
+    """     
+    if N!=1: warnings.warn("N!=1 will be ignored!")
+    if N!=1: warnings.warn("M!=1 will be ignored!")
+             
+    #a, ap, bp, c, cp, dp = _ttf(a), _ttf(ap), _ttf(bp), _ttf(c), _ttf(cp), _ttf(dp) # cast to tf
+    
+    ksi = tfd.Gamma(ap, ap/bp).sample(nsamples_latent) # NL0
+    theta = tfd.Gamma(a, ksi).sample((K,nsamples_latent1)) # K x NL1 x NL0
+    
+    eta = tfd.Gamma(cp, cp/dp).sample(nsamples_latent)
+    beta =  tfd.Gamma(c, eta).sample((K,nsamples_latent1))
+    
+    latent = tf.reduce_sum(theta*beta, 0) # NL1 x NL0
+    latent = tf.reshape(latent, [-1]) # NL1*NL0
+      
+    poisson = tfd.Poisson(rate=latent)
+    #y_samples = np.random.poisson(latent, size=[nsamples_output, nsamples_latent*nsamples_latent1]) # NO x NL1*NL0
+    y_samples = tf.stop_gradient( poisson.sample([nsamples_output]) )
     
     y_probs = tf.exp( poisson.log_prob(y_samples) )
     #y_probs1 = np.array([[tf.exp(tfd.Poisson(rate=latent[i]).log_prob(y_samples[j,i])).numpy() 
@@ -103,9 +146,8 @@ def empirical_Ey_and_Ey2_tf(a=3, ap=3, bp=1.0, c=3, cp=3, dp=1.0,
     return expectation, expectation_squared
 
 
-
 def create_moments_estimator(K=25, ESTIMATOR_NO=-1, N=1, M=1, 
-                             empirical_Ey_and_Ey2 = empirical_Ey_and_Ey2_tf):
+                             empirical_Ey_and_Ey2 = empirical_Ey_and_Ey2_tf_logscore):
     
 
     def theoretical_moments(a=3, ap=3, bp=1.0, c=3, cp=3, dp=1.0, nsamples=1000000):

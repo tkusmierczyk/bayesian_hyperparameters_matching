@@ -2,6 +2,7 @@
 
 import numpy as np
 import tensorflow as tf
+import tensorflow_probability as tfp
 from tensorflow_probability import distributions as tfd
 import warnings
 
@@ -33,7 +34,41 @@ def empirical_Ey_and_Ey2_np(ct=1.0, rt=1.0, cb=0.1, rb=0.1,
     return expectation, expectation_squared
 
 
+@tf.function
+def empirical_Ey_and_Ey2_tf_logscore(ct=1.0, rt=1.0, cb=0.1, rb=0.1, 
+                         nsamples_latent=100, nsamples_output=3, 
+                         N=1, M=1, K=25):        
+    """ Returns E_prior[Y] and E_prior[Y^2] for given set of hyperparameters.
+        The outputs are (tf) differentiable w.r.t. hyperparameters. 
+        Gradients are obtained using log-score derivative trick.
+    """                  
+    if N!=1: warnings.warn("N!=1 will be ignored!")
+    if N!=1: warnings.warn("M!=1 will be ignored!")
+           
+    theta = tfd.Gamma(ct, rt).sample((K, nsamples_latent))
+    beta =  tfd.Gamma(cb, rb).sample((K, nsamples_latent))
+    
+    latent = tf.reduce_sum(theta*beta, 0)      
+    poisson = tfd.Poisson(rate=latent)
+    y_samples = poisson.sample([nsamples_output])
 
+    conditional_expectation = tfp.monte_carlo.expectation(
+        f=lambda x: x,
+        samples=y_samples,
+        log_prob=poisson.log_prob, use_reparameterization = False)
+
+    conditional_expectation_squared = tfp.monte_carlo.expectation(
+        f=lambda x: x*x,
+        samples=y_samples,
+        log_prob=poisson.log_prob, use_reparameterization = False)
+    
+    expectation = tf.reduce_mean(conditional_expectation)
+    expectation_squared = tf.reduce_mean(conditional_expectation_squared)
+    
+    return expectation, expectation_squared
+
+
+@tf.function
 def empirical_Ey_and_Ey2_tf(ct=1.0, rt=1.0, cb=0.1, rb=0.1, 
                          nsamples_latent=100, nsamples_output=3, 
                          N=1, M=1, K=25):        
@@ -42,15 +77,16 @@ def empirical_Ey_and_Ey2_tf(ct=1.0, rt=1.0, cb=0.1, rb=0.1,
     """                  
     if N!=1: warnings.warn("N!=1 will be ignored!")
     if N!=1: warnings.warn("M!=1 will be ignored!")
-    ct, rt, cb, rb = _make_tf(ct), _make_tf(rt), _make_tf(cb), _make_tf(rb)
+    #ct, rt, cb, rb = _make_tf(ct), _make_tf(rt), _make_tf(cb), _make_tf(rb)
            
     theta = tfd.Gamma(ct, rt).sample((K, nsamples_latent))
     beta =  tfd.Gamma(cb, rb).sample((K, nsamples_latent))
     
     latent = tf.reduce_sum(theta*beta, 0)      
     poisson = tfd.Poisson(rate=latent)
-    y_samples = np.random.poisson(latent, size=[nsamples_output, nsamples_latent]) # NO x NL
-    
+    #y_samples = np.random.poisson(latent, size=[nsamples_output, nsamples_latent]) # NO x NL
+    y_samples = tf.stop_gradient( poisson.sample([nsamples_output]) )
+
     y_probs = tf.exp( poisson.log_prob(y_samples) )
     total_prob = tf.reduce_sum(y_probs, 0)
     
@@ -63,49 +99,8 @@ def empirical_Ey_and_Ey2_tf(ct=1.0, rt=1.0, cb=0.1, rb=0.1,
     return expectation, expectation_squared
 
 
-def empirical_Ey_and_Ey2_tf_reference(ct=1.0, rt=1.0, cb=0.1, rb=0.1, 
-                         nsamples_latent=100, nsamples_output=3, 
-                         N=1, M=1, K=25):              
-    """ Returns E_prior[Y] and E_prior[Y^2] for given set of hyperparameters.
-        The outputs are (tf) differentiable w.r.t. hyperparameters. 
-        Warning: proof-of-concept code based on loops (very slow);
-        for practical purposes use the above version using tensor operations."""                
-    ct, rt, cb, rb = _make_tf(ct), _make_tf(rt), _make_tf(cb), _make_tf(rb)
-
-    expectation = 0.0
-    expectation_squared = 0.0
-    for n in range(nsamples_latent):            
-        # sample latent variables
-        theta = tfd.Gamma(ct, rt).sample((N,K))
-        beta =  tfd.Gamma(cb, rb).sample((K,M))
-        latent = tf.matmul(theta, beta) 
-
-        # for each latent sample y-s
-        total_prob = 0.0
-        conditional_expectation = 0.0
-        conditional_expectation_squared = 0.0
-        latent = latent[0,0] # take just one cell (comment it out to take a mean over all cells)
-        poisson = tfd.Poisson(rate=latent)
-
-        #y_samples = list(i for i in range(nsamples_output))
-        y_samples = np.array([np.random.poisson(latent) for _ in range(nsamples_output)])
-        y_probs = [tf.exp(poisson.log_prob(y)) for y in y_samples]
-        #assert_valid(np.array(y_probs))
-        for m in range(nsamples_output):
-            y, prob = y_samples[m], y_probs[m]   
-            total_prob += prob                
-            conditional_expectation += prob * y
-            conditional_expectation_squared += prob * (y*y)
-        expectation += conditional_expectation/total_prob
-        expectation_squared += conditional_expectation_squared/total_prob      
-          
-    expectation = expectation/(nsamples_latent)
-    expectation_squared = expectation_squared/(nsamples_latent)    
-    return expectation, expectation_squared
-
-
 def create_moments_estimator(K=25, ESTIMATOR_NO=-1, N=1, M=1, 
-                             empirical_Ey_and_Ey2 = empirical_Ey_and_Ey2_tf):
+                             empirical_Ey_and_Ey2 = empirical_Ey_and_Ey2_tf_logscore):
     
 
     def theoretical_moments(ct, rt, cb, rb):
@@ -202,5 +197,5 @@ def create_moments_estimator(K=25, ESTIMATOR_NO=-1, N=1, M=1,
     return estimator
 
 
-empirical_Ey_and_Ey2 = empirical_Ey_and_Ey2_tf
+empirical_Ey_and_Ey2 = empirical_Ey_and_Ey2_tf_logscore #empirical_Ey_and_Ey2_tf
 
