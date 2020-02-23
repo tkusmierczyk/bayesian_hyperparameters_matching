@@ -9,7 +9,7 @@ The code demonstrates how to choose hyperparameters for priors in Bayesian model
 
 The code was used and is necessary to reproduce results from the paper:
 
-E. de Souza da Silva, T. Kuśmierczyk (equal contribution), M. Hartmann, A. Klami: **Prior specification via prior predictive matching: Poisson matrix factorization and beyond**
+E. de Souza da Silva, T. Kuśmierczyk (equal contribution), M. Hartmann, A. Klami: **Prior specification via prior predictive matching: Poisson matrix factorization and beyond** [(arXiv preprint)](https://arxiv.org/pdf/1910.12263.pdf)
 
 
 ### Abstract
@@ -39,7 +39,7 @@ an approach that matches suitable statistics of the prior predictive distributio
 
 ### Pre-installation Requirements
 
-The code was tested using Python 3.6 from Anaconda 2018.*.
-It requires TensorFlow 1.13.1 (in eager mode), TensorFlow Probability 0.6.0, numpy, pandas, seaborn, and matplotlib to be preinstalled.
+The code was tested using Python 3.7.4, TensorFlow 2.1.0, TensorFlow Probability 0.9.0.
+It uses numpy, pandas, seaborn, and matplotlib.
 
 
