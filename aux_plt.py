@@ -82,30 +82,6 @@ def my_formatter2(x, pos):
         return val_str.replace("0.", ".", 1)
     else:
         return val_str    
-    
-
-# Set up the formatter.
-major_formatter3 = FuncFormatter(my_formatter3)    
-major_formatter2 = FuncFormatter(my_formatter2)    
-
-
-def fix_colors(bp, color):
-    # boxplot style adjustments
-    [item.set_linewidth(2) for item in bp['boxes']]
-    [item.set_linewidth(2) for item in bp['fliers']]
-    [item.set_linewidth(2) for item in bp['medians']]
-    [item.set_linewidth(2) for item in bp['means']]
-    [item.set_linewidth(0.5) for item in bp['whiskers']]
-    [item.set_linewidth(0.5) for item in bp['caps']]
-
-    [item.set_color(color) for item in bp['boxes']]
-    [item.set_color("k") for item in bp['fliers']]
-    [item.set_color(color) for item in bp['medians']]
-    [item.set_color("k") for item in bp['means']]
-    [item.set_color("k") for item in bp['whiskers']]
-    [item.set_color("k") for item in bp['caps']]
-
-
 
 
 def running_mean1(x):

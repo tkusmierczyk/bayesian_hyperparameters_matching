@@ -21,7 +21,6 @@ def is_valid(w):
 def assert_valid(w, msg=""):
     assert is_valid(w), msg
     
-
     
 def print2(txt):
     sys.stdout.write(txt+"\n")    
@@ -43,25 +42,6 @@ def sel_without_prefix(dct, prefix=""):
 
 def get_traceback():
     return ''.join(l for l in traceback.format_stack() if "anaconda" not in l)
-
-
-_annouced = {}
-def print_numtimes(method, msg, num_times=1):
-    if _annouced.get(method, 0)>=num_times: return
-    _annouced[method] = _annouced.get(method, 0) + 1
-    print2("%s" % (method))
-announce_yourself = print_numtimes
-
-
-_print_counter = {}
-def sparse_print(method, msg, num_times=10, first_times=10):
-    if num_times<=1:
-        print2(msg)
-        return
-    
-    _print_counter[method] = _print_counter.get(method, 0) + 1
-    if _print_counter[method]%num_times==0 or _print_counter[method]<=first_times: 
-        print2("[exec no:%i]%s" % (_print_counter[method], msg))
 
 
 def retrieve_param(name, kwargs):
